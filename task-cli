@@ -1,0 +1,149 @@
+#!C:/Users/bazar/AppData/Local/Programs/Python/Python312/python.exe
+
+import sys
+import os
+import datetime 
+import json
+
+now = datetime.datetime.now()
+
+valid_status = ["todo", "done", "in-progress"]
+
+def read_file():
+    f = open("tasks.json", "r")
+    tasks = json.loads(f.read())
+    f.close()
+    return tasks
+
+
+def write_file(tasks):
+    parsed_tasks = json.dumps(tasks)
+    f = open("tasks.json", "w")
+    f.write(parsed_tasks)
+    f.close()
+
+
+class Task:
+    def __init__(self):
+        self.task_dict = dict()
+
+    def create_task(self, desc):
+        if os.path.exists("tasks.json"):
+            tasks = read_file()
+            for x in tasks:
+                i = x["id"]
+            self.task_dict["id"] = i + 1
+        else:
+            self.task_dict["id"] = 1
+
+        self.task_dict["description"] = desc
+        self.task_dict["status"] = "todo"
+        self.task_dict["created_at"] = str(now)
+        self.task_dict["updated_at"] = str(now)
+
+        return self.task_dict
+
+
+def show_help():
+    print("Welcome to task-cli! Here's how to use the tool:")
+    print("Usage: task-cli <command> [options] [arguments]")
+    print("Commands:")
+    print("  --help                                    Show this help message\n")
+    print("    add [task_id] [new_task_name]           Adding a new task")
+    print("    update [task_id] [update_task_name]     Updating a task")
+    print("    delete [task_id]                        Deleting a task\n")
+    print("    mark in-progress [task_id]              Marking a task as in progress")
+    print("    mark done [task_id]                     Marking a task as done\n")
+    print("    list                                    Listing all tasks")
+    print("    list done                               Listing tasks by status")
+    print("    list todo                               Listing tasks by status")
+    print("    list in-progress                        Listing tasks by status")
+
+
+def add_task(desc):
+    task = Task()
+    new_task = task.create_task(desc)
+    if os.path.exists("tasks.json"):
+        tasks = read_file()
+        tasks.append(new_task)
+    else:
+        tasks = [new_task]
+    write_file(tasks)
+
+
+def update_task(id, desc):
+    tasks = read_file()
+    for i in tasks:
+        if int(id) == i["id"]:
+            i.update({"description": desc})
+            i.update({"updated_at": str(now)})
+    write_file(tasks)
+    
+
+def delete_task(id):
+    tasks = read_file()
+    for i in tasks:
+        if int(id) == i["id"]:
+            tasks.remove(i)
+    write_file(tasks)
+    
+
+def mark_task(status, id):
+    tasks = read_file()
+    for i in tasks:
+        if int(id) == i["id"]:
+            i.update({"status": status})
+    write_file(tasks)
+
+
+def show_all_tasks(status = None):
+    tasks = read_file()
+    if status == None:
+        for i in tasks:
+            print(i)
+    elif status == "todo":
+        for i in tasks:
+            if i["status"] == "todo":
+                print(i)
+    elif status == "done":
+        for i in tasks:
+            if i["status"] == "done":
+                print(i)
+    elif status == "in-progress":
+        for i in tasks:
+            if i["status"] == "in-progress":
+                print(i)
+    else:
+        raise ValueError("status value invalid")
+
+def main():
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '--help':
+            show_help()
+        elif sys.argv[1] == 'add':
+            desc = sys.argv[2]
+            add_task(desc)
+        elif sys.argv[1] == 'update':
+            id = sys.argv[2]
+            desc = sys.argv[3]
+            update_task(id, desc)
+        elif sys.argv[1] == 'delete':
+            id = sys.argv[2]
+            delete_task(id)
+        elif sys.argv[1] == 'mark':
+            status = sys.argv[2]
+            id = sys.argv[3]
+            mark_task(status, id)
+        elif sys.argv[1] == 'list':
+            if len(sys.argv) > 2:
+                status = sys.argv[2]
+                show_all_tasks(status)
+            else:
+                show_all_tasks()
+        else:
+            print(f"Unknown argument: {sys.argv[1]}")
+    else:
+        print("Hello, task-cli!")
+
+if __name__ == '__main__':
+    main()
